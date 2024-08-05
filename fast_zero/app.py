@@ -10,20 +10,10 @@ from fast_zero.schemas import Message, UserList, UserPublic, UserSchema
 
 app = FastAPI()
 
-database = []  # Lista provisória para fins de estudo
-
 
 @app.get('/', status_code=HTTPStatus.OK, response_model=Message)
 def read_root():
     return {'message': 'Olá Mundo!'}
-
-
-@app.get('/users/', response_model=UserList)
-def read_users(
-    skip: int = 0, limit: int = 100, session: Session = Depends(get_session)
-):
-    users = session.scalars(select(User).offset(skip).limit(limit)).all()
-    return {'users': users}
 
 
 @app.post('/users/', status_code=HTTPStatus.CREATED, response_model=UserPublic)
@@ -49,11 +39,20 @@ def create_user(user: UserSchema, session: Session = Depends(get_session)):
     db_user = User(
         username=user.username, password=user.password, email=user.email
     )
+
     session.add(db_user)
     session.commit()
     session.refresh(db_user)
 
     return db_user
+
+
+@app.get('/users/', response_model=UserList)
+def read_users(
+    skip: int = 0, limit: int = 100, session: Session = Depends(get_session)
+):
+    users = session.scalars(select(User).offset(skip).limit(limit)).all()
+    return {'users': users}
 
 
 @app.put('/users/{user_id}', response_model=UserPublic)
